@@ -1,5 +1,7 @@
 package com.sky.test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sky.entity.DishFlavor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +11,7 @@ import org.springframework.data.redis.core.*;
 @SpringBootTest
 public class SpringDataRedisTest {
     @Autowired
-    private RedisTemplate redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Test
     public void test() {
@@ -21,10 +23,18 @@ public class SpringDataRedisTest {
         ZSetOperations zSetOperations = redisTemplate.opsForZSet();
     }
 
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+
     @Test
-    public void testString() {
+    public void testString() throws JsonProcessingException {
         redisTemplate.opsForValue().set("city", "shanghai");
-        DishFlavor dishFlavor = new DishFlavor(1L, 1L, "name", "ren");
-        redisTemplate.opsForValue().set("dishFlavor", dishFlavor);
+        DishFlavor dishFlavor = new DishFlavor(1L, 1L, "name", "xing");
+        // 序列化
+        String serialize = objectMapper.writeValueAsString(dishFlavor);
+        redisTemplate.opsForValue().set("dishFlavor", serialize);
+        String json = redisTemplate.opsForValue().get("dishFlavor");
+        // 手动反序列化
+        DishFlavor dishFlavor1 = objectMapper.readValue(json, DishFlavor.class);
+        System.out.println(dishFlavor1);
     }
 }
